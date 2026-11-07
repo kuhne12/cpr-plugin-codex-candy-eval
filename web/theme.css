@@ -22,7 +22,8 @@
 
 /* CPAMC, also used when the page is opened directly: paper (default), white and dark themes.
    Frame from .main-content; the band copies .top-gradient-blur as CPAMC's build renders it, without blur. */
-:root:not([data-cpamp-plugin-host]) {
+/* CPR 有独立主题映射，不继承 CPAMC 的渐变遮罩与明暗表面 */
+:root:not([data-cpamp-plugin-host]):not([data-cpr-plugin-host]) {
   --page-top: 70px; --page-inline: clamp(20px, 3vw, 48px); --section-gap: 24px;
   --bg: #faf9f5; --bg-image: none; --surface: #f0eee8; --sunken: #e9e6df; --field: #faf9f5; --line: #e3e1db; --card-line: var(--line);
   --ink: #2d2a26; --muted: #6d6760; --faint: #a29c95;
@@ -134,6 +135,7 @@
    The page keeps its own token names and reads CPR's values where it has them. */
 :root[data-cpr-plugin-host] {
   --page-top: 16px; --page-inline: 20px; --section-gap: 16px;
+  --bg-image: none;
   --bg: var(--cp-color-bg-layout, #faf9f5);
   --surface: var(--cp-color-bg-container, #f0eee8);
   --sunken: var(--cp-color-bg-container-disabled, #e9e6df);
@@ -169,7 +171,7 @@
   --warning-soft: var(--cp-color-warning-container, rgb(217 119 6 / 10%));
   --warning-line: var(--cp-color-warning-border, rgb(217 119 6 / 30%));
   --radius: var(--cp-border-radius, 12px);
-  --shadow: var(--cp-box-shadow, 0 1px 2px rgb(0 0 0 / 8%));
+  --shadow: var(--cp-card-shadow, 0 1px 2px rgb(0 0 0 / 8%));
   --float: var(--cp-box-shadow-secondary, 0 12px 26px rgb(0 0 0 / 14%));
   --glass: none;
   --tip-bg: var(--cp-color-bg-spotlight, #24211c);
