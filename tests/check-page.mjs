@@ -209,7 +209,7 @@ const bridgeSource = `
 (function () {
   const api = {
     version: 2,
-    plugin: Object.freeze({ name: "nmbb.codex-candy-eval" }),
+    plugin: Object.freeze({ name: "kuhne12.codex-candy-eval" }),
     page: Object.freeze({ id: "codex-candy-eval", title: "Codex 降智与指纹测试" }),
     theme: Object.freeze({ name: "dark", tokens: {} }),
     resourceUrl(path) { throw new Error("页面不应直接加载资源：" + path); },

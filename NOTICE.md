@@ -2,6 +2,8 @@
 
 本仓库是 **CPR（codex-proxy-rs）平台上的魔改移植版**，不是上游原作者发布的版本。
 
+本分支基于 Bud-Open/cpr-plugin-codex-candy-eval 的 `04c305d` 提交，适配 CPR 3.41.2 与 Linux ARM64；保留原项目许可及第三方声明
+
 ## 一、上游项目
 
 | 项目 | 地址 | 许可 | 本仓库如何使用 |

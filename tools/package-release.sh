@@ -16,7 +16,8 @@ assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?',value)
 print(value)
 PY
 )"
-output="$root/dist/native-$version"
+target="${TARGET:-$("$cargo" -vV | sed -n 's/^host: //p')}"
+output="$root/dist/$target-$version"
 # Keep earlier candidates intact. A version can be packaged only into a new directory.
 [[ ! -e "$output" ]] || { printf '%s\n' 'Release output already exists; refusing to overwrite.' >&2; exit 1; }
 "$cargo" fmt --manifest-path "$root/Cargo.toml" -- --check
@@ -24,19 +25,19 @@ output="$root/dist/native-$version"
 python3 -m unittest discover -s "$root/tests" -p 'test_*.py'
 node "$root/tests/check-page.mjs" "$root"
 node "$root/tools/build-page.mjs" "$root"
-"$cargo" build --offline --locked --release --manifest-path "$root/Cargo.toml"
+"$cargo" build --offline --locked --release --target "$target" --manifest-path "$root/Cargo.toml"
 "$cli" package \
   --manifest "$root/plugin.json" \
-  --binary "${CARGO_TARGET_DIR:-$root/target}/release/codex-proxy-plugin-candy-eval" \
-  --target x86_64-unknown-linux-gnu \
+  --binary "${CARGO_TARGET_DIR:-$root/target}/$target/release/codex-proxy-plugin-candy-eval" \
+  --target "$target" \
   --resource-map "web=build/resources-$version/web" \
   --output-dir "$output"
 # Independently verify the official per-file digests and forbid external script resources.
-python3 - "$output" "$version" <<'PY'
+python3 - "$output" "$version" "$target" <<'PY'
 import hashlib,json,sys,tarfile
 from pathlib import Path
-folder=Path(sys.argv[1]); version=sys.argv[2]
-package=folder/f'nmbb.codex-candy-eval-{version}-x86_64-unknown-linux-gnu.tar.gz'
+folder=Path(sys.argv[1]); version=sys.argv[2]; target=sys.argv[3]
+package=folder/f'kuhne12.codex-candy-eval-{version}-{target}.tar.gz'
 with tarfile.open(package) as archive:
     manifest=json.load(archive.extractfile('plugin.json'))
     assert manifest['version']==version

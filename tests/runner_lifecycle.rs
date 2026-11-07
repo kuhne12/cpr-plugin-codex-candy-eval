@@ -57,7 +57,7 @@ impl Fixture {
                     handshake: Handshake {
                         protocol_version: gateway_plugin_sdk::PROTOCOL_VERSION,
                         artifact_sha256: "fixture-artifact".into(),
-                        plugin_id: "nmbb.codex-candy-eval".into(),
+                        plugin_id: "kuhne12.codex-candy-eval".into(),
                         instance_id: "fixture-instance".into(),
                         generation: 1,
                         incarnation: "fixture-incarnation".into(),

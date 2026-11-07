@@ -2,6 +2,8 @@
 
 **CPR（codex-proxy-rs）原生 Rust 插件**：把 CPA 平台上的 [`cpa-plugin-codex-candy-eval`](https://github.com/haowang02/cpa-plugin-codex-candy-eval)（Go + CGO 动态库）的检测能力，重写为运行在 CPR `gateway-plugin-sdk` 上的独立子进程插件，用于自查 Codex 账号是否“降智”、模型指纹是否被替换、以及模型在长输出与指令遵循上的退化。
 
+本分支基于 [Bud-Open/cpr-plugin-codex-candy-eval](https://github.com/Bud-Open/cpr-plugin-codex-candy-eval) 独立维护，插件 ID 为 `kuhne12.codex-candy-eval`，与其他发布者版本隔离
+
 > 本仓库是**魔改移植版**，不是上游原作者发布的产品。来源与许可见 [NOTICE.md](NOTICE.md) 与 [LICENSE](LICENSE)。
 
 ## 功能套件
@@ -30,7 +32,7 @@
 
 ### 官方 CPR 上的后台评测
 
-v1.11.x 使用官方 CPR `>= 3.38.1, < 3.39.0` 和插件 RPC v7；CPR `>= 3.37.2, < 3.38.0` 使用 v1.10.x（RPC v7）；CPR `>= 3.35.1, < 3.36.0` 使用 v1.9.x（RPC v7）；CPR `>= 3.34.0, < 3.35.0` 使用 v1.8.x（RPC v7）。官方 SDK 管理任务挂起、恢复授权和回调消费。CPR `>= 3.32.0, < 3.33.0` 使用 v1.7.x（RPC v6）；两者均支持模型事件中的 WebSocket 原文。CPR `>= 3.31.0, < 3.32.0` 使用 v1.6.x（RPC v5）；CPR `>= 3.30.2, < 3.31.0` 使用 v1.5.x（RPC v5）；CPR `>= 3.29.7, < 3.30.0` 使用 v1.4.x（RPC v5）。v1.2.x / v1.3.x 使用 CPR `>= 3.29.1, < 3.29.7` 和 RPC v4；CPR 3.28.x 请使用 v1.1.3（RPC v2）。插件自动为每个测试账号创建自己的单账号分组和测试 Key，不更改账号原有分组，不复用业务 Key。每次启动前检查组内只有目标账号、Key 只关联该组且保留预算和限流；检查失败就拒绝启动。
+当前版本支持 CPR `>=3.41.2, <3.42.0`，使用 RPC v7 和固定提交的官方 SDK。插件按需为每个被测账号建立专用单账号分组及测试 Key，执行前检查成员、启用状态和预算，避免误测其他账号
 
 新建 Key 默认并发上限 16、每分钟 120 请求、每日预算 5 USD、每周预算 20 USD。可在 CPR 的 Key 管理中调整预算或下调限流；并发须为 1–16、每分钟请求上限须为 1–120，日预算和周预算须保持正数。Key 仅在执行器内存中使用，不传给页面或写入插件状态。
 
@@ -62,7 +64,7 @@ v1.11.x 使用官方 CPR `>= 3.38.1, < 3.39.0` 和插件 RPC v7；CPR `>= 3.37.2
 
 ## 构建与测试
 
-依赖：Rust **1.99.1**、Python 3、Node.js（页面契约测试）、与目标宿主协议匹配的官方 `cpr-plugin` CLI。仓库的 `rust-toolchain.toml` 固定工具链，打包脚本从工程外调用时也默认选择 1.99.1；显式设置 `RUSTUP_TOOLCHAIN` 可覆盖，但必须满足 SDK 的最低版本要求。v1.11.x 使用 CPR 3.38.1 的 RPC v7 打包器；v1.10.x 使用 CPR 3.37.2 的 RPC v7 打包器；v1.9.x 使用 CPR 3.35.1 的 RPC v7 打包器；v1.8.x 使用 CPR 3.34.0 的 RPC v7 打包器；v1.7.x 使用 CPR 3.32.0 的 RPC v6 打包器；v1.6.x 使用 CPR 3.31.0 的 RPC v5 打包器；v1.5.x 使用 CPR 3.30.2 的 RPC v5 打包器；v1.4.x 使用 CPR 3.29.7 的 RPC v5 打包器；v1.2.x / v1.3.x 使用 RPC v4 打包器。可用 `CPR_PLUGIN_CLI` 指定 CLI 路径；旧版 CLI 会拒绝新版清单。
+依赖：Rust **1.99.1**、Python 3、Node.js，以及 CPR 3.41.2 的官方 `cpr-plugin` CLI。SDK 固定到 v3.41.2 的不可变 Git 对象（锁文件同时固定实际提交），工具链由 `rust-toolchain.toml` 固定
 
 ```bash
 # 首次准备：先安装工具链并下载依赖，之后才能离线测试
@@ -76,12 +78,13 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 node tests/check-page.mjs .
 
 # 从目标宿主的固定标签源码构建匹配 CLI，工程放在相邻目录
-git clone --branch v3.38.1 --depth 1 https://github.com/zyycn/codex-proxy-rs.git ../cpr-host
+git clone --branch v3.41.2 --depth 1 https://github.com/zyycn/codex-proxy-rs.git ../cpr-host
 cargo +1.99.1 build --release --locked --manifest-path ../cpr-host/backend/Cargo.toml -p codex-proxy-plugin-cli
 
 # 打包入口自动执行 fmt、Rust/Python 回归、页面校验、内联打包及 release 构建
-CPR_PLUGIN_CLI="$PWD/../cpr-host/backend/target/release/cpr-plugin" bash tools/package-release.sh
-# 输出：dist/native-<version>/nmbb.codex-candy-eval-<version>-x86_64-unknown-linux-gnu.tar.gz
+TARGET=aarch64-unknown-linux-gnu CPR_PLUGIN_CLI="$PWD/../cpr-host/backend/target/release/cpr-plugin" bash tools/package-release.sh
+# TARGET 默认取 Rust 本机平台；指定其他平台时需预先配置相应工具链和链接器
+# 输出：dist/<target>-<version>/kuhne12.codex-candy-eval-<version>-<target>.tar.gz
 ```
 
 ### 浏览器布局回归（v1.0.10）
@@ -100,9 +103,9 @@ python3 tests/check-browser-layout.py --port <cdp-port>
 
 ## 安装与升级
 
-v1.11.x 对应官方 CPR `>= 3.38.1, < 3.39.0`（RPC v7）；v1.10.x 对应官方 CPR `>= 3.37.2, < 3.38.0`（RPC v7）；v1.9.x 对应官方 CPR `>= 3.35.1, < 3.36.0`（RPC v7）；v1.8.x 对应官方 CPR `>= 3.34.0, < 3.35.0`（RPC v7）；v1.7.x 对应官方 CPR `>= 3.32.0, < 3.33.0`（RPC v6）；v1.6.x 对应官方 CPR `>= 3.31.0, < 3.32.0`（RPC v5）；v1.5.x 对应官方 CPR `>= 3.30.2, < 3.31.0`（RPC v5）；v1.4.x 对应官方 CPR `>= 3.29.7, < 3.30.0`（RPC v5）；v1.2.x / v1.3.x 对应 CPR `>= 3.29.1, < 3.29.7`（RPC v4）；CPR 3.28.x 使用 v1.1.3（RPC v2）。均无需宿主补丁，跨协议升级须同时升级宿主与插件。
+当前版本适配 CPR `>=3.41.2, <3.42.0`（RPC v7），支持 Linux ARM64 原生构建；无需修改宿主
 
-1. 通过 CPR 管理接口上传制品：`POST /api/admin/plugins/artifacts/upload`；
+1. 在管理端插件页上传安装包，先校验包信息和摘要，再确认安装；首次安装会建立默认实例并启用，自动测试默认关闭
 2. 用 `switch-version` 把既有实例原子切换到新版本（实例 ID 不变，状态与历史记录保留）；
 3. 校验实例状态：`running: true`、无 `loadError`、无兼容性警告，资源与路由数量符合预期；
 4. 异常时恢复与宿主 RPC 协议匹配的制品。没有数据库或状态格式变更时，配套回退旧宿主与旧制品：先切回兼容制品，再更新实例配置和启停状态，避免旧宿主拒绝新版制品。涉及数据库迁移时，先保全升级后数据，再使用已验证备份恢复。v1.0.14 依赖旧宿主补丁，不能在官方镜像上单独降级到该版。**跨 v1.0.12 状态格式降级必须同时恢复升级前插件状态备份及配额，不能只切旧二进制**：新版使用多键双缓冲，状态配额为 40 条 / 2 MiB，旧版仅 10 条 / 256 KiB。恢复操作应先核对备份和目标实例。
