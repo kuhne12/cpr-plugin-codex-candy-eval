@@ -32,7 +32,7 @@
 
 ### 官方 CPR 上的后台评测
 
-当前版本支持 CPR `>=3.41.2, <3.42.0`，使用 RPC v7 和固定提交的官方 SDK。插件按需为每个被测账号建立专用单账号分组及测试 Key，执行前检查成员、启用状态和预算，避免误测其他账号
+当前版本支持 CPR `>=3.41.2, <=3.54.3`，使用 RPC v7 和固定提交的官方 SDK。插件按需为每个被测账号建立专用单账号分组及测试 Key，执行前检查成员、启用状态和预算，避免误测其他账号
 
 新建 Key 默认并发上限 16、每分钟 120 请求、每日预算 5 USD、每周预算 20 USD。可在 CPR 的 Key 管理中调整预算或下调限流；并发须为 1–16、每分钟请求上限须为 1–120，日预算和周预算须保持正数。Key 仅在执行器内存中使用，不传给页面或写入插件状态。
 
@@ -64,7 +64,7 @@
 
 ## 构建与测试
 
-依赖：Rust **1.99.1**、Python 3、Node.js，以及 CPR 3.41.2 的官方 `cpr-plugin` CLI。SDK 固定到 v3.41.2 的不可变 Git 对象（锁文件同时固定实际提交），工具链由 `rust-toolchain.toml` 固定
+依赖：Rust **1.99.1**、Python 3、Node.js，以及目标宿主版本的官方 `cpr-plugin` CLI。SDK 固定到 v3.41.2 的不可变 Git 对象（锁文件同时固定实际提交），工具链由 `rust-toolchain.toml` 固定
 
 ```bash
 # 首次准备：先安装工具链并下载依赖，之后才能离线测试
@@ -78,7 +78,7 @@ python3 -m unittest discover -s tests -p 'test_*.py'
 node tests/check-page.mjs .
 
 # 从目标宿主的固定标签源码构建匹配 CLI，工程放在相邻目录
-git clone --branch v3.41.2 --depth 1 https://github.com/zyycn/codex-proxy-rs.git ../cpr-host
+git clone --branch v3.54.3 --depth 1 https://github.com/zyycn/codex-proxy-rs.git ../cpr-host
 cargo +1.99.1 build --release --locked --manifest-path ../cpr-host/backend/Cargo.toml -p codex-proxy-plugin-cli
 
 # 打包入口自动执行 fmt、Rust/Python 回归、页面校验、内联打包及 release 构建
@@ -103,7 +103,7 @@ python3 tests/check-browser-layout.py --port <cdp-port>
 
 ## 安装与升级
 
-当前版本适配 CPR `>=3.41.2, <3.42.0`（RPC v7），支持 Linux ARM64 原生构建；无需修改宿主
+当前版本适配 CPR `>=3.41.2, <=3.54.3`（RPC v7），支持 Linux ARM64 原生构建；无需修改宿主
 
 1. 在管理端插件页上传安装包，先校验包信息和摘要，再确认安装；首次安装会建立默认实例并启用，自动测试默认关闭
 2. 用 `switch-version` 把既有实例原子切换到新版本（实例 ID 不变，状态与历史记录保留）；
